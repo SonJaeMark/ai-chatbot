@@ -1,0 +1,19 @@
+{
+  "name": "AI Chatbot",
+  "build": {
+    "dockerfile": "../Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      }
+    }
+  },
+  "forwardPorts": [8080, 6379, 5432],
+  "postCreateCommand": "./gradlew build || ./mvnw package",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2.12.2": {}
+  },
+  "remoteUser": "root"
+}

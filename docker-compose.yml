@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  app:
+    build: .                      # ⬅️ tells Docker to use your Dockerfile
+    ports:
+      - "8080:8080"               # ⬅️ exposes your Spring Boot API
+    env_file:
+      - .env                      # ⬅️ load environment variables
+    depends_on:
+      - db
+      - redis

@@ -1,0 +1,20 @@
+spring:
+  r2dbc:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}  # Fallback to 6379 if not set
+
+logging:
+  level:
+    '[org.springframework.web]': DEBUG
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY}
+    endpoint: ${GEMINI_ENDPOINT}
+
+
