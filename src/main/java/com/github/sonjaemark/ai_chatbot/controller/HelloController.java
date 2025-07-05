@@ -11,4 +11,9 @@ public class HelloController {
     public Mono<String> hello() {
         return Mono.just("Hello World!");
     }
+
+    @GetMapping("/love")
+    public Mono<String> love() {
+        return Mono.just("Hello Love loveee! <3 <3 <3");
+    }
 }
