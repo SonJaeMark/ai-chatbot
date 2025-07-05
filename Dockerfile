@@ -6,6 +6,9 @@ WORKDIR /app
 # Copy everything (to build the JAR)
 COPY . .
 
+RUN chmod +x mvnw
+
+
 # Build the JAR using Maven wrapper
 RUN ./mvnw clean package -DskipTests
 
