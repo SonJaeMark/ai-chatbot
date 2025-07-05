@@ -26,7 +26,7 @@ public class GeminiController {
             sessionId = UUID.randomUUID().toString();  // generate a new one
         }
         String response = geminiService.chat(sessionId, prompt);
-        return "Session: " + sessionId + "\nGemini:\n" + response;
+        return "Session: " + sessionId + "\nGemini: " + response;
     }
 
     @PostMapping("/reset")
