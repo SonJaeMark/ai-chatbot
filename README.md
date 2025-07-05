@@ -142,10 +142,6 @@ docker-compose up --build
 ---
 
 
-Absolutely! Here's an **expanded section** in your `README.md` that shows **how to use the API in different programming languages** — Java, JavaScript, Python, and C++.
-
----
-
 ## 🧩 How to Use the API in Your Project
 
 Use this API in any app that can make HTTP requests.
