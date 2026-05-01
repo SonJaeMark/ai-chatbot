@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.context.request.WebRequest;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -86,13 +86,18 @@ public class GeminiController {
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, Object>> handleResponseStatusException(
         ResponseStatusException ex,
-        WebRequest request
+        ServerHttpRequest request
     ) {
         Map<String, Object> error = new HashMap<>();
         error.put("status", ex.getStatusCode().value());
         error.put("error", ex.getStatusCode().toString());
         error.put("message", ex.getReason() != null ? ex.getReason() : "Request failed.");
-        error.put("path", request.getDescription(false).replace("uri=", ""));
+        error.put("path", request.getPath().value());
+
+        Throwable cause = ex.getCause();
+        if (cause != null && cause.getMessage() != null && !cause.getMessage().isBlank()) {
+            error.put("details", cause.getMessage());
+        }
 
         if (ex.getStatusCode().value() == HttpStatus.BAD_GATEWAY.value()) {
             error.put("possibleCause", "Gemini API request failed or remote service is unavailable.");
