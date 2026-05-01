@@ -3,6 +3,7 @@ package com.github.sonjaemark.ai_chatbot.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -24,6 +25,10 @@ public class GeminiService {
 
     
     public String chat(String sessionId, String userPrompt) {
+        if (userPrompt == null || userPrompt.isBlank()) {
+            throw new IllegalArgumentException("Prompt must not be blank.");
+        }
+
         memoryManager.addUserMessage(sessionId, userPrompt);
 
         Map<String, Object> body = Map.of("contents", memoryManager.getHistory(sessionId));
@@ -34,12 +39,17 @@ public class GeminiService {
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-            endpoint + "?key=" + apiKey,
-            HttpMethod.POST,
-            request,
-            new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {}
-        );
+        ResponseEntity<Map<String, Object>> response;
+        try {
+            response = restTemplate.exchange(
+                endpoint + "?key=" + apiKey,
+                Objects.requireNonNull(HttpMethod.POST),
+                request,
+                new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+        } catch (RestClientException ex) {
+            throw new IllegalStateException("Failed to call Gemini API. Check API key, endpoint, and request payload.", ex);
+        }
 
         String reply = "No response";
         Map<String, Object> responseBody = response.getBody();

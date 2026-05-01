@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import com.github.sonjaemark.ai_chatbot.service.GeminiService;
 
@@ -48,12 +50,28 @@ public class GeminiController {
     }
 
     @PostMapping("/upload-context")
-    public Map<String, Object> uploadContext(@RequestBody String context,
+    public Map<String, Object> uploadContext(@RequestBody(required = false) String context,
                                              @RequestParam String instruction) {
+        if (instruction == null || instruction.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "instruction must not be blank.");
+        }
+        if (context == null || context.isBlank()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Context body is required. Send raw text in the request body (Content-Type: text/plain)."
+            );
+        }
+
         String sessionId = UUID.randomUUID().toString();
         String additionalContext = "Context: " + context + "\nInstruction: " + instruction;
 
-        geminiService.uploadContext(sessionId, additionalContext);
+        try {
+            geminiService.uploadContext(sessionId, additionalContext);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        } catch (IllegalStateException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, ex.getMessage(), ex);
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Context uploaded.");
