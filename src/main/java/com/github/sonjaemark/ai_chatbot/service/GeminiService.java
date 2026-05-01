@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -28,6 +29,12 @@ public class GeminiService {
         if (userPrompt == null || userPrompt.isBlank()) {
             throw new IllegalArgumentException("Prompt must not be blank.");
         }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("GEMINI_API_KEY is missing or empty.");
+        }
+        if (endpoint == null || endpoint.isBlank()) {
+            throw new IllegalStateException("GEMINI_ENDPOINT is missing or empty.");
+        }
 
         memoryManager.addUserMessage(sessionId, userPrompt);
 
@@ -47,8 +54,23 @@ public class GeminiService {
                 request,
                 new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {}
             );
+        } catch (RestClientResponseException ex) {
+            String responseBody = ex.getResponseBodyAsString();
+            String bodySnippet = responseBody == null ? "" : responseBody;
+            if (bodySnippet.length() > 500) {
+                bodySnippet = bodySnippet.substring(0, 500) + "...";
+            }
+            throw new IllegalStateException(
+                "Gemini API returned " + ex.getStatusCode().value() + " " + ex.getStatusText()
+                    + ". Response: " + bodySnippet,
+                ex
+            );
         } catch (RestClientException ex) {
-            throw new IllegalStateException("Failed to call Gemini API. Check API key, endpoint, and request payload.", ex);
+            throw new IllegalStateException(
+                "Failed to call Gemini API. Check API key, endpoint, network access, and request payload. "
+                    + "Cause: " + ex.getMessage(),
+                ex
+            );
         }
 
         String reply = "No response";
