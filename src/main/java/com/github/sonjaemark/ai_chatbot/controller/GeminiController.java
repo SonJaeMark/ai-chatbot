@@ -4,8 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -78,5 +81,26 @@ public class GeminiController {
         response.put("sessionId", sessionId);
 
         return response;
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatusException(
+        ResponseStatusException ex,
+        WebRequest request
+    ) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", ex.getStatusCode().value());
+        error.put("error", ex.getStatusCode().toString());
+        error.put("message", ex.getReason() != null ? ex.getReason() : "Request failed.");
+        error.put("path", request.getDescription(false).replace("uri=", ""));
+
+        if (ex.getStatusCode().value() == HttpStatus.BAD_GATEWAY.value()) {
+            error.put("possibleCause", "Gemini API request failed or remote service is unavailable.");
+            error.put("suggestion", "Verify GEMINI_API_KEY and GEMINI_ENDPOINT in Render, then retry.");
+        } else if (ex.getStatusCode().value() == HttpStatus.BAD_REQUEST.value()) {
+            error.put("suggestion", "Provide required params and raw text body (Content-Type: text/plain).");
+        }
+
+        return ResponseEntity.status(ex.getStatusCode()).body(error);
     }
 }
